@@ -1,3 +1,4 @@
+from fake_useragent import UserAgent
 from flask import Flask, render_template, request, send_file
 import csv
 from selenium import webdriver
@@ -9,9 +10,12 @@ from io import StringIO
 
 app = Flask(__name__)
 
-def scrape_lazada_products(base_url, num_pages):
+def scrape_lazada_products(product_name, num_pages):
     # Initialize the WebDriver
     chrome_options = Options()
+    ua = UserAgent()
+    user_agent = ua.random
+    chrome_options.add_argument(f'user-agent={user_agent}')
     driver_path = 'chromedriver.exe'  # Ensure this points to your correct chromedriver location
     service = Service(driver_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -21,10 +25,11 @@ def scrape_lazada_products(base_url, num_pages):
     # Main loop to iterate through pages
     for page_number in range(1, num_pages + 1):
         # Construct the URL for the current page
-        url = base_url.format(page_number)
+        formatted_product_name = product_name.replace(' ', '-')
+        base_url = f"https://www.lazada.com.ph/tag/{formatted_product_name}//?page={page_number}&q={product_name.replace(' ', '%20')}&rating=4&style=list"
         
         # Navigate to the current page
-        driver.get(url)
+        driver.get(base_url)
         
         # Find all product items
         product_items = driver.find_elements(By.CSS_SELECTOR, '[data-qa-locator="product-item"]')
